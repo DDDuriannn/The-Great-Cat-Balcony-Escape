@@ -1,0 +1,795 @@
+/* ==========================================================================
+   猫咪阳台大逃亡 2.0 - 样式表
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: linear-gradient(180deg, #FFE5A8 0%, #FFD180 50%, #FFB37A 100%);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
+               "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB",
+               "Heiti SC", sans-serif;
+  color: #4A3520;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+#game {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+  background: #87CEEB;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+/* ==========================================================================
+   屏幕边缘红色警告（狗危险度高时）
+   ========================================================================== */
+.danger-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 8;
+  box-shadow: inset 0 0 80px 20px rgba(255, 60, 60, 0);
+  transition: box-shadow 0.3s;
+}
+
+.danger-overlay.warn {
+  animation: danger-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes danger-pulse {
+  0%, 100% { box-shadow: inset 0 0 80px 20px rgba(255, 60, 60, 0.4); }
+  50%      { box-shadow: inset 0 0 120px 30px rgba(255, 30, 30, 0.7); }
+}
+
+/* ==========================================================================
+   HUD
+   ========================================================================== */
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 10px 14px;
+  pointer-events: none;
+  z-index: 10;
+  gap: 12px;
+}
+
+.hud.hidden {
+  opacity: 0;
+  pointer-events: none !important;
+}
+
+.hud-left, .hud-center, .hud-right {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.hud-center {
+  align-items: center;
+  flex: 1;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.hud-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.hud-item {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  padding: 5px 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 50px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.hud-item-combo .hud-value {
+  color: #FF7043;
+  font-weight: 900;
+}
+
+.hud-label {
+  font-size: 10px;
+  color: #8B6F47;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.hud-value {
+  font-size: 16px;
+  color: #4A3520;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.hud-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+
+.hud-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s, background 0.15s;
+}
+
+.hud-btn:hover {
+  background: #FFFFFF;
+  transform: scale(1.06);
+}
+
+.hud-btn:active {
+  transform: scale(0.94);
+}
+
+/* ==========================================================================
+   能量条
+   ========================================================================== */
+.energy-bar {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  pointer-events: none;
+}
+
+.energy-label {
+  font-size: 11px;
+  color: #8B6F47;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+.energy-track {
+  height: 12px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(139, 111, 71, 0.5);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.energy-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #FFD93D 0%, #FF8A3D 50%, #FF5C8A 100%);
+  border-radius: 6px;
+  transition: width 0.15s ease-out;
+  box-shadow: 0 0 8px rgba(255, 138, 61, 0.6);
+}
+
+.energy-fill.full {
+  animation: energy-full-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes energy-full-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(255, 138, 61, 0.6); }
+  50%      { box-shadow: 0 0 16px rgba(255, 92, 138, 1); }
+}
+
+/* ==========================================================================
+   状态徽章
+   ========================================================================== */
+.state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #FF8A3D 0%, #FF5C8A 100%);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 13px;
+  box-shadow: 0 2px 8px rgba(255, 92, 138, 0.4);
+  align-self: flex-start;
+  animation: state-badge-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.state-badge.hidden { display: none; }
+
+.state-icon { font-size: 16px; }
+
+@keyframes state-badge-in {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* 状态切换大字提示 */
+.state-announce {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.7);
+  font-size: 56px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow:
+    0 0 20px rgba(255, 138, 61, 1),
+    0 0 40px rgba(255, 92, 138, 0.6),
+    4px 4px 0 rgba(74, 53, 32, 0.8);
+  pointer-events: none;
+  z-index: 9;
+  letter-spacing: 6px;
+  opacity: 0;
+  transition: none;
+}
+
+.state-announce.show {
+  animation: state-announce-anim 1.4s ease-out;
+}
+
+.state-announce.hidden { display: none; }
+
+@keyframes state-announce-anim {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  60%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -120%) scale(1.1); }
+}
+
+/* ==========================================================================
+   任务卡
+   ========================================================================== */
+.missions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 220px;
+  pointer-events: none;
+}
+
+.mission-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 10px;
+  padding: 8px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #FFB347;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: mission-in 0.3s ease-out;
+}
+
+@keyframes mission-in {
+  from { transform: translateX(20px); opacity: 0; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+.mission-card.completed {
+  border-left-color: #4CAF50;
+  background: rgba(220, 245, 220, 0.92);
+}
+
+.mission-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4A3520;
+  margin-bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mission-check {
+  font-size: 14px;
+  color: #4CAF50;
+  font-weight: 900;
+  display: none;
+}
+
+.mission-card.completed .mission-check {
+  display: inline-block;
+}
+
+.mission-progress {
+  height: 5px;
+  background: rgba(139, 111, 71, 0.2);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.mission-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #FFB347 0%, #FF7043 100%);
+  border-radius: 3px;
+  transition: width 0.3s;
+  width: 0%;
+}
+
+.mission-card.completed .mission-progress-fill {
+  background: #4CAF50;
+}
+
+.mission-text {
+  font-size: 11px;
+  color: #6B4F30;
+  margin-top: 2px;
+}
+
+/* 任务完成大浮字 */
+.mission-announce {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+  color: #fff;
+  padding: 14px 28px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(76, 175, 80, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+  z-index: 9;
+  font-weight: 800;
+  opacity: 0;
+}
+
+.mission-announce.show {
+  animation: mission-announce-anim 1.8s ease-out;
+}
+
+.mission-announce.hidden { display: none; }
+
+@keyframes mission-announce-anim {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  15%  { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  85%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -100%) scale(1); }
+}
+
+.ma-icon {
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.ma-text {
+  font-size: 16px;
+}
+
+/* ==========================================================================
+   危险度条（左侧）
+   ========================================================================== */
+.danger-bar-wrap {
+  position: fixed;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  z-index: 11;
+  pointer-events: none;
+}
+
+.danger-bar-label {
+  font-size: 11px;
+  color: #fff;
+  background: rgba(74, 53, 32, 0.85);
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.danger-bar-track {
+  width: 14px;
+  height: 200px;
+  background: rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(74, 53, 32, 0.7);
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.danger-bar-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  background: linear-gradient(0deg, #4CAF50 0%, #FFC107 60%, #F44336 100%);
+  transition: height 0.2s ease-out;
+}
+
+.danger-bar-fill.high {
+  animation: danger-bar-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes danger-bar-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
+}
+
+.danger-bar-dog {
+  font-size: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.danger-warn {
+  font-size: 11px;
+  color: #fff;
+  background: #F44336;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  animation: danger-warn-pulse 0.6s ease-in-out infinite;
+}
+
+.danger-warn.hidden { display: none; }
+
+@keyframes danger-warn-pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
+/* ==========================================================================
+   浮字（加分提示）
+   ========================================================================== */
+.floaters {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 7;
+  overflow: hidden;
+}
+
+.floater {
+  position: absolute;
+  font-weight: 800;
+  font-size: 22px;
+  color: #FF7043;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.25), 0 0 8px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  animation: floater-rise 0.9s ease-out forwards;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+}
+
+.floater.score { color: #FFC107; font-size: 18px; }
+.floater.combo { color: #FF5C8A; font-size: 26px; }
+.floater.gold { color: #FFB300; font-size: 28px; text-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 0 12px rgba(255, 179, 0, 0.8); }
+.floater.can { color: #FF7043; font-size: 26px; }
+.floater.danger-up { color: #F44336; font-size: 18px; }
+.floater.danger-down { color: #4CAF50; font-size: 18px; }
+.floater.energy { color: #FF8A3D; font-size: 18px; }
+.floater.shield { color: #4FC3F7; font-size: 22px; }
+
+@keyframes floater-rise {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+  20%  { opacity: 1; transform: translate(-50%, -90%) scale(1.15); }
+  100% { opacity: 0; transform: translate(-50%, -180%) scale(1); }
+}
+
+/* ==========================================================================
+   面板（开始 / 暂停 / 结束 / 加载）
+   ========================================================================== */
+.panel {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 20;
+  padding: 16px;
+  animation: fade-in 0.3s ease-out;
+}
+
+.panel.hidden { display: none; }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.panel-card {
+  background: rgba(255, 255, 255, 0.97);
+  border-radius: 22px;
+  padding: 26px 26px 22px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: pop-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes pop-in {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.panel-emoji {
+  font-size: 50px;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
+.panel-title {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: 900;
+  color: #FF7043;
+  text-shadow: 0 2px 0 rgba(255, 112, 67, 0.15);
+  letter-spacing: 1px;
+}
+
+.panel-title .ver {
+  font-size: 16px;
+  background: linear-gradient(135deg, #FF7043 0%, #FF5C8A 100%);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 8px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.panel-title-sm {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 800;
+  color: #4A3520;
+}
+
+.panel-subtitle {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: #6B4F30;
+  line-height: 1.5;
+}
+
+.panel-systems {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 14px;
+}
+
+.sys-chip {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: #FFF8E8;
+  border: 1px solid #FFE0B2;
+  border-radius: 12px;
+  color: #6B4F30;
+  font-weight: 600;
+}
+
+.panel-help {
+  background: #FFF8E8;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.help-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #5A4220;
+}
+
+.help-row .key {
+  display: inline-block;
+  background: #FFFFFF;
+  border: 1px solid #E0CDA0;
+  border-radius: 5px;
+  padding: 1px 7px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4A3520;
+  min-width: 78px;
+  text-align: center;
+}
+
+.mobile-only { display: none; }
+
+@media (hover: none) and (pointer: coarse) {
+  .mobile-only { display: flex; }
+}
+
+.panel-btn {
+  display: block;
+  width: 100%;
+  padding: 13px 18px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #FFB347 0%, #FF7043 100%);
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.12), 0 6px 16px rgba(255, 112, 67, 0.3);
+  transition: transform 0.1s, box-shadow 0.1s;
+  margin-top: 6px;
+  font-family: inherit;
+}
+
+.panel-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.12), 0 8px 20px rgba(255, 112, 67, 0.4);
+}
+
+.panel-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.12), 0 3px 10px rgba(255, 112, 67, 0.3);
+}
+
+.panel-btn-ghost {
+  background: transparent;
+  color: #6B4F30;
+  box-shadow: none;
+  border: 2px solid #E0CDA0;
+  margin-top: 6px;
+}
+
+.panel-btn-ghost:hover { background: #FFF8E8; }
+
+.panel-tip {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #8B6F47;
+}
+
+/* 结束界面统计 */
+.gameover-stats {
+  background: #FFF8E8;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.go-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.go-row-best {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed #E0CDA0;
+}
+
+.go-label { color: #6B4F30; font-weight: 600; }
+
+.go-value {
+  color: #4A3520;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-size: 16px;
+}
+
+.go-row-best .go-value { color: #FF7043; }
+
+.go-newbest {
+  margin-top: 6px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #FF7043;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.go-newbest.hidden { display: none; }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.08); }
+}
+
+/* ==========================================================================
+   响应式
+   ========================================================================== */
+@media (max-width: 600px) {
+  .hud {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .hud-item {
+    padding: 4px 8px;
+    min-width: 44px;
+  }
+  .hud-label { font-size: 9px; }
+  .hud-value { font-size: 14px; }
+  .hud-btn { width: 36px; height: 36px; font-size: 16px; }
+  .missions { max-width: 160px; }
+  .mission-card { padding: 6px 8px; }
+  .mission-title { font-size: 11px; }
+  .danger-bar-wrap { left: 6px; }
+  .danger-bar-track { width: 10px; height: 140px; }
+  .danger-bar-dog { font-size: 18px; }
+  .state-announce { font-size: 40px; }
+  .panel-card { padding: 20px 18px 16px; }
+  .panel-title { font-size: 22px; }
+  .sys-chip { font-size: 10px; padding: 3px 6px; }
+}
+
+@media (max-height: 540px) and (orientation: landscape) {
+  .panel-card {
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 14px 22px;
+  }
+  .panel-emoji { font-size: 36px; margin-bottom: 2px; }
+  .panel-title { font-size: 20px; }
+  .panel-subtitle { margin-bottom: 8px; font-size: 12px; }
+  .panel-help { margin-bottom: 10px; padding: 6px 10px; }
+  .help-row { font-size: 11px; }
+  .panel-systems { margin-bottom: 8px; }
+  .missions { max-width: 140px; }
+  .mission-card { padding: 5px 7px; }
+  .danger-bar-track { height: 120px; }
+}
+
+/* ==========================================================================
+   减少动画偏好
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  .panel-card, .panel, .floater, .mission-card,
+  .state-badge, .state-announce, .mission-announce,
+  .danger-warn, .energy-fill, .danger-overlay, .danger-bar-fill {
+    animation: none !important;
+    transition: none !important;
+  }
+}

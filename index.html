@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#FFD86B" />
+  <meta name="description" content="猫咪阳台大逃亡 2.0 - 一个轻策略网页跑酷小游戏" />
+  <title>猫咪阳台大逃亡 2.0</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><text y=%2250%22 font-size=%2250%22>🐱</text></svg>" />
+</head>
+<body>
+  <!-- 游戏主画布 -->
+  <canvas id="game" aria-label="猫咪阳台大逃亡 2.0 游戏画面"></canvas>
+
+  <!-- 屏幕边缘红色警告（狗危险度 ≥ 50% 时显示） -->
+  <div id="danger-overlay" class="danger-overlay" aria-hidden="true"></div>
+
+  <!-- 顶部 HUD -->
+  <div id="hud" class="hud hidden" aria-live="polite">
+
+    <!-- 左侧：分数、距离、鱼干、combo、状态 -->
+    <div class="hud-left">
+      <div class="hud-row">
+        <div class="hud-item">
+          <span class="hud-label">分数</span>
+          <span id="hud-score" class="hud-value">0</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">距离</span>
+          <span id="hud-distance" class="hud-value">0m</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">鱼干</span>
+          <span id="hud-fish" class="hud-value">0</span>
+        </div>
+        <div class="hud-item hud-item-combo">
+          <span class="hud-label">连击</span>
+          <span id="hud-combo" class="hud-value">x1</span>
+        </div>
+      </div>
+      <!-- 状态标签 -->
+      <div id="state-badge" class="state-badge hidden">
+        <span id="state-icon" class="state-icon">⚡</span>
+        <span id="state-name" class="state-name">冲刺</span>
+      </div>
+    </div>
+
+    <!-- 顶部中央：能量条 -->
+    <div class="hud-center">
+      <div class="energy-bar">
+        <div class="energy-label">能量</div>
+        <div class="energy-track">
+          <div id="energy-fill" class="energy-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右上：任务卡 -->
+    <div class="hud-right">
+      <div id="missions" class="missions"></div>
+      <div class="hud-buttons">
+        <button id="btn-mute" class="hud-btn" type="button" title="静音/取消静音 (M)" aria-label="静音切换">🔊</button>
+        <button id="btn-pause" class="hud-btn" type="button" title="暂停 (P)" aria-label="暂停">⏸</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 左侧：狗追逐危险度条 -->
+  <div id="danger-bar-wrap" class="danger-bar-wrap">
+    <div class="danger-bar-label">危险度</div>
+    <div class="danger-bar-track">
+      <div id="danger-bar-fill" class="danger-bar-fill"></div>
+    </div>
+    <div class="danger-bar-dog">🐕</div>
+    <div id="danger-warn" class="danger-warn hidden">⚠️ 危险!</div>
+  </div>
+
+  <!-- 加分浮字容器 -->
+  <div id="floaters" class="floaters" aria-hidden="true"></div>
+
+  <!-- 状态切换大字提示 -->
+  <div id="state-announce" class="state-announce hidden" aria-live="polite"></div>
+
+  <!-- 任务完成大浮字 -->
+  <div id="mission-announce" class="mission-announce hidden" aria-live="polite">
+    <div class="ma-icon">✓</div>
+    <div class="ma-text"></div>
+  </div>
+
+  <!-- 开始界面 -->
+  <div id="panel-ready" class="panel panel-ready" role="dialog" aria-label="开始游戏">
+    <div class="panel-card">
+      <div class="panel-emoji" aria-hidden="true">🐱</div>
+      <h1 class="panel-title">猫咪阳台大逃亡 <span class="ver">2.0</span></h1>
+      <p class="panel-subtitle">点击跳跃 · 选择路线 · 收集鱼干 · 甩开狗狗</p>
+      <div class="panel-systems">
+        <span class="sys-chip">🛣️ 三层路线</span>
+        <span class="sys-chip">🐕 狗追逐</span>
+        <span class="sys-chip">⚡ 冲刺</span>
+        <span class="sys-chip">🎲 随机事件</span>
+        <span class="sys-chip">🎯 任务</span>
+        <span class="sys-chip">😺 猫咪状态</span>
+      </div>
+      <div class="panel-help">
+        <div class="help-row"><span class="key">空格 / ↑</span><span>跳跃（空中再按 = 二段跳）</span></div>
+        <div class="help-row"><span class="key">↓ / S</span><span>下滑 / 蹲伏</span></div>
+        <div class="help-row"><span class="key">X / Shift</span><span>冲刺 3 秒（能量满时）</span></div>
+        <div class="help-row"><span class="key">P</span><span>暂停</span></div>
+        <div class="help-row"><span class="key">M</span><span>静音</span></div>
+        <div class="help-row"><span class="key">R</span><span>重新开始</span></div>
+        <div class="help-row mobile-only"><span class="key">点击 / 上滑</span><span>跳跃</span></div>
+        <div class="help-row mobile-only"><span class="key">下滑</span><span>下滑</span></div>
+      </div>
+      <button id="btn-start" class="panel-btn" type="button">点击 / 按空格开始</button>
+      <p class="panel-tip">历史最高：<span id="ready-best">0</span> · 累计鱼干：<span id="ready-total-fish">0</span></p>
+    </div>
+  </div>
+
+  <!-- 暂停界面 -->
+  <div id="panel-paused" class="panel panel-paused hidden" role="dialog" aria-label="游戏暂停">
+    <div class="panel-card">
+      <div class="panel-emoji" aria-hidden="true">⏸</div>
+      <h2 class="panel-title-sm">已暂停</h2>
+      <button id="btn-resume" class="panel-btn" type="button">继续游戏</button>
+      <button id="btn-restart-paused" class="panel-btn panel-btn-ghost" type="button">重新开始</button>
+    </div>
+  </div>
+
+  <!-- 结束界面 -->
+  <div id="panel-gameover" class="panel panel-gameover hidden" role="dialog" aria-label="游戏结束">
+    <div class="panel-card">
+      <div class="panel-emoji" aria-hidden="true">😿</div>
+      <h2 class="panel-title-sm">被狗狗追上了…</h2>
+      <div class="gameover-stats">
+        <div class="go-row">
+          <span class="go-label">本局分数</span>
+          <span id="go-score" class="go-value">0</span>
+        </div>
+        <div class="go-row">
+          <span class="go-label">奔跑距离</span>
+          <span id="go-distance" class="go-value">0m</span>
+        </div>
+        <div class="go-row">
+          <span class="go-label">鱼干数量</span>
+          <span id="go-fish" class="go-value">0</span>
+        </div>
+        <div class="go-row">
+          <span class="go-label">最高连击</span>
+          <span id="go-combo" class="go-value">0</span>
+        </div>
+        <div class="go-row">
+          <span class="go-label">完成任务</span>
+          <span id="go-missions" class="go-value">0/3</span>
+        </div>
+        <div class="go-row go-row-best">
+          <span class="go-label">最高分</span>
+          <span id="go-best" class="go-value">0</span>
+        </div>
+        <div id="go-newbest" class="go-newbest hidden">🎉 新纪录！</div>
+      </div>
+      <button id="btn-restart" class="panel-btn" type="button">再玩一次</button>
+    </div>
+  </div>
+
+  <!-- 加载界面 -->
+  <div id="panel-loading" class="panel panel-loading hidden" role="dialog" aria-label="加载中">
+    <div class="panel-card">
+      <div class="panel-emoji" aria-hidden="true">🐾</div>
+      <p>正在准备小鱼干…</p>
+    </div>
+  </div>
+
+  <script src="game.js" defer></script>
+</body>
+</html>
