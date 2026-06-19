@@ -2468,7 +2468,16 @@ class Game {
     // DPR & 屏幕缩放
     this._dpr = 1;
     this._resize();
+    // 桌面 resize + 移动端 visualViewport (iOS Safari 地址栏收起/展开)
     window.addEventListener('resize', () => this._resize());
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => this._resize());
+      window.visualViewport.addEventListener('scroll', () => this._resize());
+    }
+    // 屏幕旋转延迟 100ms,等浏览器布局稳定
+    window.addEventListener('orientationchange', () => {
+      setTimeout(() => this._resize(), 100);
+    });
 
     // 启动循环
     this._loop = this._loop.bind(this);
@@ -2487,11 +2496,23 @@ class Game {
     const w = Config.LOGIC_W, h = Config.LOGIC_H;
     this.canvas.width = w * dpr;
     this.canvas.height = h * dpr;
-    this.canvas.style.width = '100vw';
-    this.canvas.style.height = '100vh';
-    this._scale = Math.min(window.innerWidth / w, window.innerHeight / h);
-    this.canvas.style.width = (w * this._scale) + 'px';
-    this.canvas.style.height = (h * this._scale) + 'px';
+    // cover 模式:canvas CSS 尺寸填满视口,允许在竖屏轻微纵向拉伸以避免大幅 letterbox
+    const aspect = w / h;  // 1.778
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const vAspect = vw / vh;
+    let cssW, cssH;
+    if (vAspect > aspect) {
+      // 视口更宽(横屏)→ 高填满,宽按比例
+      cssH = vh;
+      cssW = vh * aspect;
+    } else {
+      // 视口更窄(竖屏)→ 宽填满,高按比例
+      cssW = vw;
+      cssH = vw / aspect;
+    }
+    this.canvas.style.width = cssW + 'px';
+    this.canvas.style.height = cssH + 'px';
+    this._scale = cssW / w;  // 用于触屏坐标换算
   }
 
   _bindUI() {
@@ -2771,8 +2792,29 @@ class Game {
 
 window.addEventListener('DOMContentLoaded', () => {
   // 显示 loading 极短时间，然后切到 ready
-  const game = new Game();
+  let game;
+  try {
+    game = new Game();
+  } catch (e) {
+    console.error('[猫咪阳台大逃亡] 初始化失败:', e);
+    // 替换 ready 面板为错误信息
+    const panel = document.getElementById('panel-ready');
+    if (panel) {
+      const card = panel.querySelector('.panel-card');
+      if (card) {
+        const msg = (e && e.message) ? e.message : String(e);
+        card.innerHTML = `
+          <div class="panel-emoji" aria-hidden="true">😿</div>
+          <h2 class="panel-title-sm">游戏加载失败</h2>
+          <p style="font-size:13px;color:#666;margin:8px 0;">浏览器或网络环境不支持 Web 游戏初始化。</p>
+          <p style="font-size:11px;color:#999;word-break:break-all;text-align:left;background:#f5f5f5;padding:8px;border-radius:6px;">${msg}</p>
+          <p style="font-size:11px;color:#aaa;margin-top:8px;">建议：刷新页面、关闭代理、换用 Chrome / Safari 最新版。</p>
+        `;
+      }
+    }
+    return;
+  }
   setTimeout(() => {
-    game._enterReady();
+    try { game._enterReady(); } catch (e) { console.error(e); }
   }, 200);
 });

@@ -11,9 +11,10 @@ html, body {
   margin: 0;
   padding: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100dvh;  /* 移动端地址栏自适应 */
   overflow: hidden;
-  background: linear-gradient(180deg, #FFE5A8 0%, #FFD180 50%, #FFB37A 100%);
+  background: linear-gradient(180deg, #87CEEB 0%, #FFD180 50%, #FFB37A 100%);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei",
                "Helvetica Neue", Helvetica, Arial, "Hiragino Sans GB",
                "Heiti SC", sans-serif;
@@ -72,7 +73,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 10px 14px;
+  padding: max(10px, env(safe-area-inset-top)) 14px 10px;
   pointer-events: none;
   z-index: 10;
   gap: 12px;
@@ -104,7 +105,7 @@ body {
 }
 
 .hud-item {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 12px;
   padding: 5px 10px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -114,6 +115,11 @@ body {
   min-width: 50px;
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+}
+
+/* 不支持 backdrop-filter 的旧浏览器(老 Android WebView)用更高不透明度 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .hud-item { background: rgba(255, 255, 255, 0.95); }
 }
 
 .hud-item-combo .hud-value {
@@ -521,7 +527,10 @@ body {
   justify-content: center;
   background: rgba(0, 0, 0, 0.4);
   z-index: 20;
-  padding: 16px;
+  padding: max(16px, env(safe-area-inset-top))
+           max(16px, env(safe-area-inset-right))
+           max(16px, env(safe-area-inset-bottom))
+           max(16px, env(safe-area-inset-left));
   animation: fade-in 0.3s ease-out;
 }
 
@@ -741,6 +750,64 @@ body {
 /* ==========================================================================
    响应式
    ========================================================================== */
+@media (max-width: 420px) {
+  /* 竖屏窄屏手机:iPhone 12/13/14 Pro (390px)、Pixel 7 (412px) 等 */
+  .hud {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+  .hud-item {
+    padding: 3px 6px;
+    min-width: 38px;
+  }
+  .hud-label { font-size: 8px; }
+  .hud-value { font-size: 12px; }
+  .hud-center { max-width: 120px; }
+  .hud-center .energy-label { font-size: 9px; }
+  .hud-btn { width: 32px; height: 32px; font-size: 14px; }
+  .missions { max-width: 110px; }
+  .mission-card { padding: 4px 6px; }
+  .mission-title { font-size: 10px; }
+  .mission-progress { height: 3px; }
+  .panel-card {
+    padding: 16px 14px 12px;
+    max-height: 90dvh;
+    overflow-y: auto;
+  }
+  .panel-emoji { font-size: 40px; margin-bottom: 2px; }
+  .panel-title { font-size: 20px; }
+  .panel-title-sm { font-size: 18px; }
+  .panel-subtitle { font-size: 12px; margin-bottom: 8px; }
+  .sys-chip { font-size: 9px; padding: 2px 5px; }
+  .help-row { font-size: 11px; padding: 3px 6px; }
+  .panel-help { padding: 8px 10px; margin-bottom: 10px; }
+  .panel-systems { margin-bottom: 10px; }
+  .panel-btn { padding: 10px 16px; font-size: 14px; }
+  .gameover-stats { margin: 8px 0 12px; }
+  .go-row { padding: 5px 0; font-size: 12px; }
+  .state-announce { font-size: 32px; }
+  .state-badge { padding: 3px 8px; font-size: 11px; }
+  .mission-announce { font-size: 20px; padding: 12px 20px; }
+  .danger-bar-track { width: 8px; height: 100px; }
+  .danger-bar-dog { font-size: 14px; }
+  .danger-bar-label { font-size: 9px; }
+  .floater { font-size: 14px; }
+}
+
+@media (max-width: 360px) {
+  /* 极窄屏:iPhone SE (375px) / Galaxy Fold 外屏等 */
+  .hud-left .hud-row { gap: 3px; }
+  .hud-item { min-width: 32px; padding: 3px 4px; }
+  .hud-value { font-size: 11px; }
+  .hud-center { max-width: 90px; }
+  .missions { display: none; }  /* 任务卡太占空间,极窄屏隐藏 */
+  .hud-right { gap: 3px; }
+  .hud-btn { width: 28px; height: 28px; font-size: 12px; }
+  .panel-card { padding: 12px 10px 10px; }
+  .panel-title { font-size: 18px; }
+  .sys-chip { font-size: 8px; padding: 2px 4px; }
+}
+
 @media (max-width: 600px) {
   .hud {
     padding: 8px 10px;
