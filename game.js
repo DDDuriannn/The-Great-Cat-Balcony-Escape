@@ -2496,23 +2496,10 @@ class Game {
     const w = Config.LOGIC_W, h = Config.LOGIC_H;
     this.canvas.width = w * dpr;
     this.canvas.height = h * dpr;
-    // cover 模式:canvas CSS 尺寸填满视口,允许在竖屏轻微纵向拉伸以避免大幅 letterbox
-    const aspect = w / h;  // 1.778
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const vAspect = vw / vh;
-    let cssW, cssH;
-    if (vAspect > aspect) {
-      // 视口更宽(横屏)→ 高填满,宽按比例
-      cssH = vh;
-      cssW = vh * aspect;
-    } else {
-      // 视口更窄(竖屏)→ 宽填满,高按比例
-      cssW = vw;
-      cssH = vw / aspect;
-    }
-    this.canvas.style.width = cssW + 'px';
-    this.canvas.style.height = cssH + 'px';
-    this._scale = cssW / w;  // 用于触屏坐标换算
+    // 100% 填满视口,允许内部 960×540 拉伸到任意屏幕比例
+    this.canvas.style.width = '100vw';
+    this.canvas.style.height = '100dvh';
+    this._scale = window.innerWidth / w;  // 用于触屏坐标换算
   }
 
   _bindUI() {
